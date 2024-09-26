@@ -14,6 +14,8 @@ void wait_1ms() {
 }
 
 void kernel_main() {
+    esp_printf(putc, "Current Execution Level is %d\r\n", getEL());
+
     extern int __bss_start;
     extern int __bss_end;
 
