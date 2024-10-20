@@ -1,4 +1,8 @@
-char global[128];
+#include "rprintf.h"  // Include the correct header for esp_printf
+
+extern void putc(int c);
+unsigned int getEL();
+void mmu_on();
 
 unsigned long get_timer_count() {
     unsigned long *timer_count_register = (unsigned long *)0x3f003004;
@@ -12,6 +16,8 @@ void wait_1ms() {
     while (get_timer_count() < end_time) {
     }
 }
+
+void mmu_on();
 
 void kernel_main() {
     esp_printf(putc, "Current Execution Level is %d\r\n", getEL());
@@ -31,9 +37,16 @@ void kernel_main() {
         bss_start++;
     }
 
-    unsigned long timer_value = get_timer_count();
+    mmu_on();  // Enable MMU
+
     wait_1ms();  // Delay for 1 millisecond
 
-    while(1) {
+    while (1) {
     }
+}
+
+unsigned int getEL() {
+    unsigned int el;
+    asm volatile ("mrs %0, CurrentEL" : "=r" (el));  // Read CurrentEL register
+    return (el >> 2) & 3;  // Extract the execution level bits
 }

@@ -31,8 +31,8 @@ void list_remove(struct list_element *list_head, struct list_element *element) {
 int main() {
     struct list_element c = { NULL, 0 };
     struct list_element b = { &c, 0 };
-    struct list_element a = { &b, 0 };
-    struct list_element *head = &a;
+    //struct list_element a = { &b, 0 };
+    //struct list_element *head = &a;
 
     return 0;
 }

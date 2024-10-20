@@ -1,32 +1,34 @@
-
-
 CC := aarch64-linux-gnu-gcc
 LD := aarch64-linux-gnu-ld
-OBJDUMP := aarch64-linux-gnu--objdump
+OBJDUMP := aarch64-linux-gnu-objdump
 OBJCOPY := aarch64-linux-gnu-objcopy
 CONFIGS := -DCONFIG_HEAP_SIZE=4096
 
 CFLAGS := -O0 -ffreestanding -fno-pie -fno-stack-protector -g3 -mcpu=cortex-a53+nofp -Wall $(CONFIGS)
 
-
 ODIR = obj
 SDIR = src
 
 OBJS = \
-	boot.o \
-	kernel_main.o \
-    linked_list.o \
-
+        boot.o \
+        kernel_main.o \
+        linked_list.o \
+        mmu.o \
+        serial.o \
+        rprintf.o \
+        mmusetup.o
 
 
 OBJ = $(patsubst %,$(ODIR)/%,$(OBJS))
 
-$(ODIR)/%.o: $(SDIR)/%.c
+$(ODIR):
+	mkdir -p $(ODIR)
+
+$(ODIR)/%.o: $(SDIR)/%.c | $(ODIR)
 	$(CC) $(CFLAGS) -c -g -o $@ $^
 
-$(ODIR)/%.o: $(SDIR)/%.s
+$(ODIR)/%.o: $(SDIR)/%.s | $(ODIR)
 	$(CC) $(CFLAGS) -c -g -o $@ $^
-
 
 all: bin rootfs.img
 
@@ -39,21 +41,15 @@ bin: $(OBJ)
 clean:
 	rm -f obj/*
 	rm -f rootfs.img
-	rm -f rootfs.img
 	rm -f kernel8.img
 	rm -f kernel8.elf
 
-debug:
-	screen -S qemu -d -m qemu-system-aarch64 -machine raspi3b -kernel kernel8.img -hda rootfs.img -S -s -serial null -serial stdio -monitor none -nographic -k en-us 
-    
-    # Old line
-	#TERM=xterm gdb -x gdb_init_prot_mode.txt && killall qemu-system-aarch64
-
-    # Enable gdb compatability on x86-64
-	TERM=xterm gdb-multiarch -x gdb_init_prot_mode.txt && killall qemu-system-aarch64
-
-run:
+run: bin rootfs.img
 	qemu-system-aarch64 -machine raspi3b -kernel kernel8.img -hda rootfs.img -serial null -serial stdio -monitor none -nographic -k en-us
+
+debug:
+	screen -S qemu -d -m qemu-system-aarch64 -machine raspi3b -kernel kernel8.img -hda rootfs.img -S -s -serial null -serial stdio -monitor none -nographic -k en-us
+	TERM=xterm gdb-multiarch -x gdb_init_prot_mode.txt && killall qemu-system-aarch64
 
 disassemble:
 	$(OBJDUMP) -D kernel8.elf
@@ -67,4 +63,3 @@ rootfs.img:
 	sudo mkdir /mnt/disk/bin
 	sudo mkdir /mnt/disk/etc
 	sudo umount /mnt/disk
-
